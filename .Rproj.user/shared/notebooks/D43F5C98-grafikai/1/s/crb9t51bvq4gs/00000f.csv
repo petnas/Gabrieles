@@ -1,0 +1,126 @@
+"0","p1 <- analize_nona_f %>%
+  select(CD, RITS_valandos, glu_fac) %>%
+  mutate(CD = factor(CD, levels = c('1', '0'))) %>%
+  group_by(CD, glu_fac) %>%
+  ggplot(aes(glu_fac, RITS_valandos, fill=glu_fac))+
+  geom_boxplot()+
+  # ggboxplot(x='glu_fac', y='RITS_valandos', fill='glu_fac')+
+  # ggplot(aes(glu_fac, RITS_valandos, color=glu_fac))+
+  # geom_boxplot(position=position_dodge())+
+  # geom_point(aes(color=glu_fac), position_jitterdodge())
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(comparisons = my_comp, method = 't.test')+
+  # stat_compare_means()+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  # scale_fill_grey(breaks = c('high', 'medium', 'low'))+
+  scale_fill_discrete(breaks = c('high', 'medium', 'low'))+
+  coord_flip()
+"
+"2","Warning: [38;5;252mThe `labeller` API has been updated. Labellers taking
+`variable` and `value` arguments are now deprecated.
+[36mℹ[38;5;252m See labellers documentation.[39m"
+"0","p1 <- analize_nona_f %>%"
+"0","  select(CD, RITS_valandos, glu_fac) %>%"
+"0","  mutate(CD = factor(CD, levels = c('1', '0'))) %>%"
+"0","  group_by(CD, glu_fac) %>%"
+"0","  ggplot(aes(glu_fac, RITS_valandos, fill=glu_fac))+"
+"0","  geom_boxplot()+"
+"0","  # ggboxplot(x='glu_fac', y='RITS_valandos', fill='glu_fac')+"
+"0","  # ggplot(aes(glu_fac, RITS_valandos, color=glu_fac))+"
+"0","  # geom_boxplot(position=position_dodge())+"
+"0","  # geom_point(aes(color=glu_fac), position_jitterdodge())"
+"0","  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+"
+"0","  stat_compare_means(comparisons = my_comp, method = 't.test')+"
+"0","  # stat_compare_means()+"
+"0","  labs(x='Atvykimo\ngliukoze',"
+"0","       fill = NULL,"
+"0","       y=NULL)+"
+"0","  # scale_fill_grey(breaks = c('high', 'medium', 'low'))+"
+"0","  scale_fill_discrete(breaks = c('high', 'medium', 'low'))+"
+"0","  coord_flip()"
+"2","Warning: [38;5;252mThe `labeller` API has been updated. Labellers taking
+`variable` and `value` arguments are now deprecated.
+[36mℹ[38;5;252m See labellers documentation.[39m"
+"0","p2 <- analize_nona_f %>%"
+"0","  select(CD, RITS_valandos, RITS_glu_fac) %>%"
+"0","  mutate(CD = factor(CD, levels = c('1', '0'))) %>%"
+"0","  group_by(CD, RITS_glu_fac) %>%"
+"0","  ggplot(aes(RITS_glu_fac, RITS_valandos, fill=RITS_glu_fac))+"
+"0","  geom_boxplot()+"
+"0","  ylim(0,2500)+"
+"0","  # ggboxplot(x='glu_fac', y='RITS_valandos', fill='glu_fac')+"
+"0","  # ggplot(aes(glu_fac, RITS_valandos, color=glu_fac))+"
+"0","  # geom_boxplot(position=position_dodge())+"
+"0","  # geom_point(aes(color=glu_fac), position_jitterdodge())"
+"0","  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+"
+"0","  stat_compare_means(comparisons = my_comp, method = 't.test')+"
+"0","  # stat_compare_means()+"
+"0","  labs(x='Atvykimo\ngliukoze',"
+"0","       fill = NULL,"
+"0","       y=NULL)+"
+"0","  # scale_fill_grey(breaks = c('high', 'medium', 'low'))+"
+"0","  scale_fill_discrete(breaks = c('high', 'medium', 'low'))+"
+"0","  coord_flip()"
+"2","Warning: [38;5;252mThe `labeller` API has been updated. Labellers taking
+`variable` and `value` arguments are now deprecated.
+[36mℹ[38;5;252m See labellers documentation.[39m"
+"0","p1 <- analize_nona_f %>%"
+"0","  select(CD, RITS_valandos, glu_fac) %>%"
+"0","  mutate(CD = factor(CD, levels = c('1', '0'))) %>%"
+"0","  group_by(CD, glu_fac) %>%"
+"0","  ggplot(aes(glu_fac, RITS_valandos, fill=glu_fac))+"
+"0","  geom_boxplot()+"
+"0","  # ggboxplot(x='glu_fac', y='RITS_valandos', fill='glu_fac')+"
+"0","  # ggplot(aes(glu_fac, RITS_valandos, color=glu_fac))+"
+"0","  # geom_boxplot(position=position_dodge())+"
+"0","  # geom_point(aes(color=glu_fac), position_jitterdodge())"
+"0","  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+"
+"0","  stat_compare_means(comparisons = my_comp, method = 't.test')+"
+"0","  # stat_compare_means()+"
+"0","  labs(x='Atvykimo\ngliukoze',"
+"0","       fill = NULL,"
+"0","       y=NULL)+"
+"0","  # scale_fill_grey(breaks = c('high', 'medium', 'low'))+"
+"0","  scale_fill_discrete(breaks = c('high', 'medium', 'low'))+"
+"0","  coord_flip()"
+"2","Warning: [38;5;252mThe `labeller` API has been updated. Labellers taking
+`variable` and `value` arguments are now deprecated.
+[36mℹ[38;5;252m See labellers documentation.[39m"
+"0","p2 <- analize_nona_f %>%"
+"0","  select(CD, RITS_valandos, RITS_glu_fac) %>%"
+"0","  mutate(CD = factor(CD, levels = c('1', '0'))) %>%"
+"0","  group_by(CD, RITS_glu_fac) %>%"
+"0","  ggplot(aes(RITS_glu_fac, RITS_valandos, fill=RITS_glu_fac))+"
+"0","  geom_boxplot()+"
+"0","  ylim(0,2500)+"
+"0","  # ggboxplot(x='glu_fac', y='RITS_valandos', fill='glu_fac')+"
+"0","  # ggplot(aes(glu_fac, RITS_valandos, color=glu_fac))+"
+"0","  # geom_boxplot(position=position_dodge())+"
+"0","  # geom_point(aes(color=glu_fac), position_jitterdodge())"
+"0","  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+"
+"0","  stat_compare_means(comparisons = my_comp, method = 't.test')+"
+"0","  # stat_compare_means()+"
+"0","  labs(x='Atvykimo\ngliukoze',"
+"0","       fill = NULL,"
+"0","       y=NULL)+"
+"0","  # scale_fill_grey(breaks = c('high', 'medium', 'low'))+"
+"0","  scale_fill_discrete(breaks = c('high', 'medium', 'low'))+"
+"0","  coord_flip()"
+"2","Warning: [38;5;252mThe `labeller` API has been updated. Labellers taking
+`variable` and `value` arguments are now deprecated.
+[36mℹ[38;5;252m See labellers documentation.[39m"
+"0","ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')"
+"2","Warning: [38;5;252mRemoved 1 rows containing non-finite values
+(`stat_boxplot()`).[39m"
+"2","Warning: [38;5;252mRemoved 1 rows containing non-finite values
+(`stat_signif()`).[39m"
+"2","Warning: [38;5;252mRemoved 1 rows containing non-finite values
+(`stat_boxplot()`).[39m"
+"2","Warning: [38;5;252mRemoved 1 rows containing non-finite values
+(`stat_signif()`).[39m"
+"2","Warning: [38;5;252mRemoved 1 rows containing non-finite values
+(`stat_boxplot()`).[39m"
+"2","Warning: [38;5;252mRemoved 1 rows containing non-finite values
+(`stat_signif()`).[39m"

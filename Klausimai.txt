@@ -1,0 +1,11 @@
+Kaip skaiciuoti valandos RITS? Neturetu but puiki koreliacija su lovadieniais? Tik 0.674
+
+Do chi-squared for two categorical
+
+t-test for between cont and cat
+
+multucollinearity above 5 suspicious
+
+atvykimo_glu ~ Exitus_RITS and DPV10 and Vazopresoriai10 - no homogeneity of variances
+
+data normal without 152, 62, 142

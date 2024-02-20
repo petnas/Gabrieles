@@ -1,0 +1,1416 @@
+---
+title: 'analize_2'
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+    fig-width: 10
+    fig-height: 5
+---
+
+# Duomenu analize
+
+```{r message = FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(readxl)
+library(gmodels)
+library(rstatix)
+library(RVAideMemoire)
+library(EnvStats)
+library(ggpubr)
+library(ggstatsplot)
+library(statsExpressions)
+```
+
+```{r message = FALSE, warning=FALSE, echo=FALSE}
+theme_set(theme_bw()+
+            theme(panel.grid = element_blank(),
+                  title = element_text(color = 'black',
+                                       face='bold')))
+```
+
+```{r echo=FALSE}
+library(readxl)
+stats_new <- read_excel("stats_new.xlsx")
+```
+
+```{r echo=FALSE}
+
+stats_mod <- stats_new
+
+analize = stats_new[c('Lytis', 'Amzius', 'Atvykimo glu', 'Atv RITS glu','Dexametazonas', 'RITS valandos', 'Lovadieniai', 'Exitus RITS','SAPS', 'SOFA', 'APACHEII', 'ISARIC4C','Poliligotumas','CD','LILGFG60', 'PaO2FiO2', 'DPV10', 'PIT', 'Vazopresoriai10', 'DPVval', 'NIV10', 'NIVval', 'HF10', 'HFval', 'ECMO10', 'ECMOd', 'AtjungtasnuoECMO', 'PIT val')]
+
+colnames(analize) <- c('Lytis', 'Amzius', 'Atvykimo_glu', 'Atv_RITS_glu','Dexametazonas', 'RITS_valandos', 'Lovadieniai', 'Exitus_RITS','SAPS', 'SOFA', 'APACHEII', 'ISARIC4C','Poliligotumas','CD','LILGFG60', 'PaO2FiO2', 'DPV10', 'PIT', 'Vazopresoriai10','DPVval', 'NIV10', 'NIVval', 'HF10', 'HFval', 'ECMO10', 'ECMOd', 'AtjungtasnuoECMO', 'PITval')
+
+analize$PaO2FiO2 <- as.numeric(analize$PaO2FiO2)
+
+analize_nona <- analize
+
+analize_nona <- analize_nona %>%
+  mutate(glu_fac = ifelse(Atvykimo_glu < 5.55, 'low', 'medium')) %>%
+  mutate(glu_fac = ifelse(Atvykimo_glu > 10, 'high', glu_fac)) %>%
+  mutate(glu_fac = factor(glu_fac, levels = c('low','medium','high'))) %>%
+  mutate(RITS_glu_fac = ifelse(Atv_RITS_glu < 5.55, 'low', 'medium')) %>%
+  mutate(RITS_glu_fac = ifelse(Atv_RITS_glu > 10, 'high', RITS_glu_fac)) %>%
+  mutate(RITS_glu_fac = factor(RITS_glu_fac, levels = c('low','medium','high')))
+
+analize_nona_f <- analize_nona
+analize_nona_f[c(1,5,8,13,14,15,17,18,19,21,23,25,27)] <- lapply(analize_nona_f[c(1,5,8,13,14,15,17,18,19,21,23,25,27)], factor)
+
+```
+
+## Glikemijos verčių ir mirštamumo vertinimas
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=Exitus_RITS,
+  y=glu_fac,
+  grouping.var = CD,
+  legend.position='none',
+  bf.message=FALSE,
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'Exitus: Atvykimo gliukoze'
+  )
+)
+g2 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=Exitus_RITS,
+  y=RITS_glu_fac,
+  grouping.var = CD,
+  bf.message=FALSE,
+  data.label='both',
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'Exitus: RITS gliukoze'
+  )
+)
+
+g1[[1]]$labels$subtitle
+
+g1[[2]]$labels$subtitle
+
+g2[[1]]$labels$subtitle
+
+g2[[2]]$labels$subtitle
+
+g1[[1]] <- g1[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "12.46", italic(p) == "0.002")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g1[[2]] <- g1[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "0.30", italic(p) == "0.86")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+
+g2[[1]] <- g2[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "12.35", italic(p) == "0.002")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g2[[2]] <- g2[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "4.52", italic(p) == "0.10")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+plot <- ggarrange(g1, g2, ncol=2, nrow=1, common.legend = TRUE, legend='right')
+
+plot
+
+ggsave('glu_exit.png', width = 10, height = 5, bg='white')
+```
+
+## Glikemijos verčių ir hospitalizacijos trukmės vertinimas
+
+Grupinis
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+anno_df = compare_means(RITS_valandos ~ glu_fac, group.by = "CD", data = analize_nona_f) %>%
+ mutate(y_pos = 2200)
+
+my_comp = list(c('low','medium'), c('low','high'), c('medium','high'))
+
+variable_names <- list(
+  "0" = "Be CD" ,
+  "1" = "CD"
+)
+
+variable_labeller <- function(variable,value){
+  return(variable_names[value])
+}
+
+p1 <- analize_nona_f %>%
+  select(CD, RITS_valandos, glu_fac) %>%
+  mutate(CD = factor(CD, levels = c('1', '0'))) %>%
+  group_by(CD, glu_fac) %>%
+  ggplot(aes(glu_fac, RITS_valandos, fill=glu_fac))+
+  geom_boxplot()+
+  # ggboxplot(x='glu_fac', y='RITS_valandos', fill='glu_fac')+
+  # ggplot(aes(glu_fac, RITS_valandos, color=glu_fac))+
+  # geom_boxplot(position=position_dodge())+
+  # geom_point(aes(color=glu_fac), position_jitterdodge())
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(comparisons = my_comp, method = 't.test')+
+  # stat_compare_means()+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  # scale_fill_grey(breaks = c('high', 'medium', 'low'))+
+  scale_fill_discrete(breaks = c('high', 'medium', 'low'))+
+  coord_flip()
+
+
+p2 <- analize_nona_f %>%
+  select(CD, RITS_valandos, RITS_glu_fac) %>%
+  mutate(CD = factor(CD, levels = c('1', '0'))) %>%
+  group_by(CD, RITS_glu_fac) %>%
+  ggplot(aes(RITS_glu_fac, RITS_valandos, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,2500)+
+  # ggboxplot(x='glu_fac', y='RITS_valandos', fill='glu_fac')+
+  # ggplot(aes(glu_fac, RITS_valandos, color=glu_fac))+
+  # geom_boxplot(position=position_dodge())+
+  # geom_point(aes(color=glu_fac), position_jitterdodge())
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(comparisons = my_comp, method = 't.test')+
+  # stat_compare_means()+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  # scale_fill_grey(breaks = c('high', 'medium', 'low'))+
+  scale_fill_discrete(breaks = c('high', 'medium', 'low'))+
+  coord_flip()
+
+ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+```
+
+Bendras
+
+RITS_valandos
+
+```{r echo=FALSE, warning=FALSE}
+theme_set(theme_bw()+
+            labs_pubr()+
+            theme(panel.grid = element_blank()))
+
+variable_names <- list(
+  "0" = "Be CD" ,
+  "1" = "CD"
+)
+
+variable_labeller <- function(variable,value){
+  return(variable_names[value])
+}
+
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, RITS_valandos, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,2000)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 1500, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, RITS_valandos, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,2000)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 1500, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("RITS_valandos", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('RITS_valandos.png', width=7, height = 5, bg='white')
+```
+
+Lovadieniai
+
+```{r echo=FALSE, warning = FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, Lovadieniai, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,180)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 160, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, Lovadieniai, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,180)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 160, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("Lovadieniai", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('valandos.png', width=7, height = 5, bg='white')
+```
+
+## Glikemija ir prognozes skales
+
+APACHEII
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, APACHEII, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,60)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 50, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, APACHEII, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,60)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 50, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("APACHE II", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('APACHEII.png', width=7, height = 5, bg='white')
+```
+
+SAPS
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, SAPS, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,110)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 93, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, SAPS, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,110)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 93, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("SAPS", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('SAPS.png', width=7, height = 5, bg='white')
+```
+
+ISARIC 4C
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, ISARIC4C, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,26)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 23, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, ISARIC4C, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,26)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 23, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("ISARIC 4C", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('ISARIC4C.png', width=7, height = 5, bg='white')
+```
+
+SOFA
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, SOFA, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,26)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 23, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, SOFA, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,26)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 23, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("SOFA", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('SOFA.png', width=7, height = 5, bg='white')
+```
+
+## Hiperglikemija ir kvėpavimo funkcija
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, PaO2FiO2, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,780)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 680, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, PaO2FiO2, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,780)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 680, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("PaO2/FiO2", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('PaO2FiO2.png', width=7, height = 5, bg='white')
+```
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, PaO2FiO2, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,780)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 680, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, PaO2FiO2, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,780)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 680, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("PaO2/FiO2", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('PaO2FiO2.png', width=7, height = 5, bg='white')
+```
+
+## Hiperglikemija ir kvėpavimo funkcijos nepakankamumo gydymo būdai
+
+DPV poreikis
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=DPV10,
+  y=glu_fac,
+  grouping.var = CD,
+  legend.position='none',
+  bf.message=FALSE,
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'DPV poreikis: Atvykimo gliukoze'
+  )
+)
+g2 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=DPV10,
+  y=RITS_glu_fac,
+  grouping.var = CD,
+  bf.message=FALSE,
+  data.label='both',
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'DPV poreikis: RITS gliukoze'
+  )
+)
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]] <- g1[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "10.29", italic(p) < "0.001")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g1[[2]] <- g1[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "1.62", italic(p) == "0.45")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message = FALSE, output=FALSE}
+g2[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]] <- g2[[1]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "11.70", italic(p) < "0.001")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g2[[2]] <- g2[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "0.94", italic(p) == "0.62")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+
+```
+
+```{r echo=FALSE}
+plot <- ggarrange(g1, g2, ncol=2, nrow=1, common.legend = TRUE,
+                  legend='right')
+
+plot
+
+ggsave('DPV.png', width = 10, height = 5, bg='white')
+```
+
+DPV valandos
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, DPVval, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,780)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 680, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, DPVval, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,780)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 680, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("DPV trukmė, valandos", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('DPVval.png', width=7, height = 5, bg='white')
+```
+
+HF poreikis
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=HF10,
+  y=glu_fac,
+  grouping.var = CD,
+  legend.position='none',
+  bf.message=FALSE,
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'HF poreikis: Atvykimo gliukoze'
+  )
+)
+g2 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=HF10,
+  y=RITS_glu_fac,
+  grouping.var = CD,
+  bf.message=FALSE,
+  data.label='both',
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'HF poreikis: RITS gliukoze'
+  )
+)
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]] <- g1[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "3.16", italic(p) == "0.21")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g1[[2]] <- g1[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "4.15", italic(p) == "0.13")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message = FALSE, output=FALSE}
+g2[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]] <- g2[[1]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "8.58", italic(p) == "0.01")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g2[[2]] <- g2[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "8.13", italic(p) == "0.02")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+
+```
+
+```{r echo=FALSE}
+plot <- ggarrange(g1, g2, ncol=2, nrow=1, common.legend = TRUE,
+                  legend='right')
+
+plot
+
+ggsave('HF.png', width = 10, height = 5, bg='white')
+```
+
+HF valandos
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, HFval, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,630)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 580, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, HFval, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,630)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 580, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("HF trukmė, valandos", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('HFval.png', width=7, height = 5, bg='white')
+```
+
+NIV poreikis
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=NIV10,
+  y=glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  legend.position='none',
+  bf.message=FALSE,
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'NIV poreikis: Atvykimo gliukoze'
+  )
+)
+g2 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=NIV10,
+  y=RITS_glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  bf.message=FALSE,
+  data.label='both',
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'NIV poreikis: RITS gliukoze'
+  )
+)
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]] <- g1[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "1.37", italic(p) == "0.50")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g1[[2]] <- g1[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "2.93", italic(p) == "0.23")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]] <- g2[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "8.96", italic(p) == "0.01")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g2[[2]] <- g2[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "2.56", italic(p) == "0.28")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE}
+plot <- ggarrange(g1, g2, ncol=2, nrow=1, common.legend = TRUE,
+                  legend='right')
+
+plot
+
+ggsave('NIV.png', width = 10, height = 5, bg='white')
+```
+
+NIV valandos
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, NIVval, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,60)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 50, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, NIVval, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,60)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 50, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("NIV trukmė, valandos", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('NIVval.png', width=7, height = 5, bg='white')
+```
+
+## Hiperglikemija ir kraujotakos palaikymo būdai
+
+Vazopresoriu poreikis
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=Vazopresoriai10,
+  y=glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  legend.position='none',
+  bf.message=FALSE,
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'Vazopresoriai: Atvykimo gliukoze'
+  )
+)
+g2 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=Vazopresoriai10,
+  y=RITS_glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  bf.message=FALSE,
+  data.label='both',
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'Vazopresoriai: RITS gliukoze'
+  )
+)
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]] <- g1[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "11.27", italic(p) == "3.57e-03")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g1[[2]] <- g1[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "0.27", italic(p) == "0.88")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]] <- g2[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "13.54", italic(p) == "1.15e-03")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g2[[2]] <- g2[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "0.19", italic(p) == "0.91")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE}
+plot <- ggarrange(g1, g2, ncol=2, nrow=1, common.legend = TRUE,
+                  legend='right')
+
+plot
+
+ggsave('Vazopresoriai.png', width = 10, height = 5, bg='white')
+```
+
+ECMO
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=ECMO10,
+  y=glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  legend.position='none',
+  bf.message=FALSE,
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'ECMO: Atvykimo gliukoze'
+  )
+)
+g2 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=ECMO10,
+  y=RITS_glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  bf.message=FALSE,
+  data.label='both',
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'ECMO: RITS gliukoze'
+  )
+)
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]] <- g1[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "8.37", italic(p) == "0.02")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g1[[2]] <- g1[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "2.30", italic(p) == "0.32")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]] <- g2[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "4.54", italic(p) == "0.10")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g2[[2]] <- g2[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "0.69", italic(p) == "0.71")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE}
+plot <- ggarrange(g1, g2, ncol=2, nrow=1, common.legend = TRUE,
+                  legend='right')
+
+plot
+
+ggsave('ECMO.png', width = 10, height = 5, bg='white')
+```
+
+ECMO dienos
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  ggplot(aes(glu_fac, ECMOd, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,38)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 32, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  ggplot(aes(RITS_glu_fac, ECMOd, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,38)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 32, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("ECMO trukme, dienos", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('ECMO_dienos.png', width=7, height = 5, bg='white')
+```
+
+ECMO atjungta
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=AtjungtasnuoECMO,
+  y=glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  legend.position='none',
+  bf.message=FALSE,
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'ECMO atjungtas: Atvykimo gliukoze'
+  )
+)
+g2 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=AtjungtasnuoECMO,
+  y=RITS_glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  bf.message=FALSE,
+  data.label='both',
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'ECMO atjungtas: RITS gliukoze'
+  )
+)
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]] <- g1[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+list(chi["Pearson"]^2 * "(" * 2 * ")" == "0.19", italic(p) == 
+"0.91")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g1[[2]] <- g1[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 1 * ")" == "4.00", italic(p) == "0.05")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]] <- g2[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "0.19", italic(p) ==
+"0.91")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g2[[2]] <- g2[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 1 * ")" == "0.44", italic(p) == "0.50")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE}
+plot <- ggarrange(g1, g2, ncol=2, nrow=1, common.legend = TRUE,
+                  legend='right')
+
+plot
+
+ggsave('ECMO_atjungta.png', width = 10, height = 5, bg='white')
+```
+
+## Hiperglikemija ir pakaitinė inkstų terapija
+
+PIT
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=PIT,
+  y=glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  legend.position='none',
+  bf.message=FALSE,
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'ECMO atjungtas: Atvykimo gliukoze'
+  )
+)
+g2 <- ggstatsplot::grouped_ggbarstats(
+  data = analize_nona_f,
+  x=PIT,
+  y=RITS_glu_fac,
+  grouping.var = CD,
+  proportion.test = NULL,
+  bf.message=FALSE,
+  data.label='both',
+  palette = 'Set3',
+  messages=FALSE,
+  annotation.args = list(
+    title = 'ECMO atjungtas: RITS gliukoze'
+  )
+)
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g1[[1]] <- g1[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "3.12", italic(p) == "0.21")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g1[[2]] <- g1[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "0.49", italic(p) == "0.78")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[2]]$labels$subtitle
+```
+
+```{r echo=FALSE, message=FALSE, output=FALSE}
+g2[[1]] <- g2[[1]]+
+  labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "4.38", italic(p) == "0.11")
+)))+
+  labs(caption=NULL, title='ne CD', xlab = NULL, x = NULL)+
+  theme(legend.position="none")
+
+g2[[2]] <- g2[[2]]+labs(subtitle=ggplot2::expr(paste(
+  list(chi["Pearson"]^2 * "(" * 2 * ")" == "0.13", italic(p) == "0.94")
+)))+
+  labs(caption=NULL, title = "CD", xlab=NULL, x = NULL)+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())+
+  theme(legend.position="none")
+```
+
+```{r echo=FALSE}
+plot <- ggarrange(g1, g2, ncol=2, nrow=1, common.legend = TRUE,
+                  legend='right')
+
+plot
+
+ggsave('PIT.png', width = 10, height = 5, bg='white')
+```
+
+PIT val
+
+```{r echo=FALSE, warning=FALSE}
+p1 <- analize_nona_f %>%
+  filter(PITval > 0) %>%
+  ggplot(aes(glu_fac, PITval, fill=glu_fac))+
+  geom_boxplot()+
+  ylim(0,62)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 54, label = 'p.format')+
+  labs(x='Atvykimo\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+
+p2 <- analize_nona_f %>%
+  filter(PITval > 0) %>%
+  ggplot(aes(RITS_glu_fac, PITval, fill=RITS_glu_fac))+
+  geom_boxplot()+
+  ylim(0,62)+
+  facet_wrap(~CD, labeller = variable_labeller, ncol = 1, strip.position = 'left')+
+  stat_compare_means(label.x = 'low', label.y = 54, label = 'p.format')+
+  labs(x='RITS\ngliukoze',
+       fill = NULL,
+       y=NULL)+
+  scale_fill_brewer(breaks = c('high', 'medium', 'low'), palette="Set3")+
+  coord_flip()+
+  theme(axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank())
+
+plot <- ggarrange(p1, p2, ncol=1, nrow=2, common.legend = TRUE, legend = 'bottom')
+
+annotate_figure(plot, top = text_grob("PIT valandos", 
+               color = "black", face = "bold", size = 14),)
+
+ggsave('PIT_valandos.png', width=7, height = 5, bg='white')
+
+```
