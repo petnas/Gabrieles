@@ -1507,6 +1507,7 @@ ggsave('PIT_valandos.png', width=7, height = 5, bg='white')
 ```{r echo= FALSE, message=FALSE, warning=FALSE, output=FALSE}
 library(caret)
 library(glmnet)
+library(RColorBrewer)
 
 analize_nona_model <- analize[c(1,2,3,8,9,10,11,12,13,14,16)]
 analize_nona_model[c(1,4,9,10)] <- lapply(analize_nona_model[c(1,4,9,10)], factor)
@@ -1574,6 +1575,20 @@ confusionMatrix(predictions, analize_nona_model$Exitus_RITS, mode = "prec_recall
 
 ```
 
+### SOFA + glu_fac
+
+```{r echo= FALSE, message=FALSE, warning=FALSE}
+
+model <- train(Exitus_RITS ~ SOFA + glu_fac, data = analize_nona_model, method = "glm", 
+               trControl = train_control, 
+               family = "binomial")
+
+predictions <- predict(model, newdata = analize_nona_model)
+
+confusionMatrix(predictions, analize_nona_model$Exitus_RITS, mode = "prec_recall", positive = 'X1')
+
+```
+
 ### ISARIC4C
 
 ```{r echo= FALSE, message=FALSE, warning=FALSE}
@@ -1630,18 +1645,28 @@ confusionMatrix(predictions, analize_nona_model$Exitus_RITS, mode = "prec_recall
 summary(model)
 ```
 
-```{r echo= FALSE, message=FALSE, warning=FALSE, output=FALSE}
+## Modelis tik su Atvykimo gliukoze
+
+```{r echo= FALSE, message=FALSE, warning=FALSE}
 analize_nocd <- analize %>%
-  select(Atvykimo_glu, Exitus_RITS, CD, APACHEII) %>%
+  select(Atvykimo_glu, Exitus_RITS, CD) %>%
   filter(CD == 0) %>%
   na.omit()
 
-log.glu <- glm(Exitus_RITS ~ APACHEII + Atvykimo_glu, data=analize_nocd, family='binomial')
+log.glu <- glm(Exitus_RITS ~ Atvykimo_glu, data=analize_nocd, family='binomial')
 
+summary(log.glu)
+
+```
+
+``` {r echo= FALSE, message=FALSE, warning=FALSE}
 plot_log <- ggplot(analize_nocd, aes(x=Atvykimo_glu, y=Exitus_RITS)) + geom_point() +
-      stat_smooth(method="glm", color="green", se=FALSE, 
+      stat_smooth(method="glm", se=FALSE,
                 method.args = list(family=binomial))+
   geom_vline(xintercept = 8.63)+
-  geom_vline(xintercept = 10)
+  ylab('Exitus')+
+  xlab("Glikemija, mmol/l")
 plot_log
+
+ggsave('logistine_kreive.png', width = 5, height = 5, bg='white')
 ```
